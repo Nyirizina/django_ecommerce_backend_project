@@ -74,7 +74,9 @@
               },
               // once successfull then...
               success: function(json){
-                console.log(json)
+                // console.log(json)
+                document.getElementById('cart_quantity').
+                textContent = json.qty
               },
               // once unsuccessful
               error: function(xhr, errmsg, err){
