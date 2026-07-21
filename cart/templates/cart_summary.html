@@ -47,10 +47,36 @@
 
         {% endif %}
 
+        <br>
+        <br>
+        <div class="row justify-content-center">
+          <div class="col-md-2">Quantity:</div>
+          <div class="col-md-2">
+        <select class="form-select form-select-sm" id="select{{product.id}}">
+  <option selected>
+    {% for key,value in quantities.items %}
+       {% if key == product.id|slugify %}
+          {{ value }}
+       {% endif %}
+    {% endfor %}
+
+  </option>
+  <option value="1">1</option>
+  <option value="2">2</option>
+  <option value="3">3</option>
+  <option value="3">4</option>
+  <option value="3">5</option>
+</select>
+        </div>
+      </div>
+      <br>
+      <br>
+
 
 
         <a href="{% url 'home' %}" class="btn btn-secondary">Return to Home</a>
-        
+        <button type="button" data-index="{{ product.id }}" class="btn btn-secondary update-cart">Update</button>
+        <button type="button" data-index="{{ product.id }}" class="btn btn-danger delete-item">Remove</button>
         </center>
       </div>
     </div>
@@ -71,8 +97,92 @@
        <br>
        <br>
 
-{% endblock %}
-                    
+
+      
+<script>
+  //update cart
+// check if button pressed
+          $(document).on('click', '.update-cart', function(e){
+            // makes a onclick only responsinve to a specific task
+            e.preventDefault();
+            // grab product id
+            var productid = $(this).data('index');
+            // helps to send data to the backend of the server without having to refresh the page
+            $.ajax({
+              type: 'POST',
+              // url path of the request
+              url: '{% url "cart_update" %}',
+              //how information will be recorded in the database
+              data: {
+                product_id: $(this).data('index'),
+                product_qty: $('#select' + productid + ' option:selected').text(),
+                // prevent a hacker for hijack of form
+                csrfmiddlewaretoken: '{{ csrf_token }}',
+                action: 'post'
+
+
+              },
+              // once successfull then...
+              success: function(json){
+                // console.log(json)
+                location.reload();
+              },
+              // once unsuccessful
+              error: function(xhr, errmsg, err){
+
+              }
+
+
+
+
+
+            });
+
+
+
+          })
+          // delete item from cart
+          $(document).on('click', '.delete-item', function(e){
+            // makes a onclick only responsinve to a specific task
+            e.preventDefault();
+            // grab product id
+            // var productid = $(this).data('index');
+            // helps to send data to the backend of the server without having to refresh the page
+            $.ajax({
+              type: 'POST',
+              // url path of the request
+              url: '{% url "cart_delete" %}',
+              //how information will be recorded in the database
+              data: {
+                product_id: $(this).data('index'),
+                // prevent a hacker for hijack of form
+                csrfmiddlewaretoken: '{{ csrf_token }}',
+                action: 'post'
+
+
+              },
+              // once successfull then...
+              success: function(json){
+                // console.log(json)
+                location.reload();
+              },
+              // once unsuccessful
+              error: function(xhr, errmsg, err){
+
+              }
+
+
+
+
+
+            });
+
+
+
+          })
+
+
+  </script>
         
-    
+   {% endblock %} 
 </html>

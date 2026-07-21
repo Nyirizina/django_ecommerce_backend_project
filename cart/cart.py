@@ -15,14 +15,16 @@ class Cart():
         #make the cart data available to all pages of site
         self.cart = cart
     
-    def add(self, product):
+    def add(self, product, quantity):
         product_id = str(product.id)
+        product_qty = str(quantity)
 
         #logic
         if product_id in self.cart:
             pass
         else:
-            self.cart[product_id] = {'price': str(product.price)}
+            #self.cart[product_id] = {'price': str(product.price)}
+            self.cart[product_id] = int(product_qty)
 
         self.session.modified = True
 
@@ -39,4 +41,32 @@ class Cart():
 
         # return the looked products
         return products
+    
+    def get_quants(self):
+        quantities = self.cart
+        return quantities
+
+    def update(self, product, quantity):
+        product_id = str(product)
+        product_qty = int(quantity)
+
+        #how django sees us {'4':3, '2':5}
+        # get cart
+        ourcart = self.cart
+        #update dictionary/cart
+        ourcart[product_id] = product_qty
+
+        self.session.modified = True
+
+        result = self.cart
+        return result
+
+    def delete(self, product):
+        product_id = str(product)
+
+        # delete from dictionary/cart
+        if product_id in self.cart:
+            del self.cart[product_id]
+            
+        self.session.modified = True
 
