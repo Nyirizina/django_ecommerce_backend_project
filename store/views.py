@@ -3,9 +3,27 @@ from . models import Product, Category
 from django.contrib.auth import authenticate, login, logout
 from django.contrib import messages
 from django.contrib.auth.models import User
-from django.contrib.auth.forms import UserCreationForm
-from .forms import SignUpForm
+from django.contrib.auth.forms import UserCreationForm, UserChangeForm
+from .forms import SignUpForm, UpdateUserForm
 from django import forms
+
+def update_user(request):
+    if request.user.is_authenticated:
+        # getting user from the db who is requesting
+        current_user = User.objects.get(id=request.user.id)
+        users_form = UpdateUserForm(request.POST or None, instance=current_user)
+
+        if users_form.is_valid():
+            users_form.save()
+            # loging in user automatically after updating login details
+            login(request, current_user)
+            messages.success(request, "User has been successfully updated !!!!")
+            return redirect('home')
+        return render(request, "update_user.html",{"users_form":users_form})
+    else:
+        messages.success(request, "You must be logged IN!!!")
+        return redirect('home')
+
 
 def category_summary(request):
     categories = Category.objects.all()
@@ -83,6 +101,9 @@ def register_user(request):
              return redirect('register')   
     else:
         return render(request, 'register.html', {'form':form})
+
+
+
 
 
 
