@@ -6,6 +6,7 @@ from django.contrib.auth.models import User
 from django.contrib.auth.forms import UserCreationForm, UserChangeForm
 from .forms import SignUpForm, UpdateUserForm, ChangePasswordForm, UserInfoForm
 from django import forms
+from django.db.models import Q
 
 def update_info(request):
     if request.user.is_authenticated:
@@ -142,6 +143,22 @@ def register_user(request):
              return redirect('register')   
     else:
         return render(request, 'register.html', {'form':form})
+
+
+def search(request):
+    #determine if they filled the form
+    if request.method == "POST":
+        searched = request.POST['searched']
+        #query the products (icontains makes it none case sensitive) you can search without issues of letter mismatch
+        searched = Product.objects.filter(Q(name__icontains=searched) | Q(description__icontains=searched))
+        #test for null
+        if not searched:
+            messages.success(request, "ouups !! Product not in stock.")
+            return render(request, 'search.html', {})
+        else:
+            return render(request, 'search.html', {'searched':searched})
+    else:
+       return render(request, 'search.html', {})
 
 
 
