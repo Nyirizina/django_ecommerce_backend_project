@@ -84,8 +84,13 @@
    </div>
                 
             {% endfor %}
-            <h3> Total: ${{ totals }}</h3>
-            <br><br><br>
+            <h3>Total: ${{ totals }}</h3>
+            <div class="d-flex gap-2 mt-3 mb-4">
+                <a href="{% url 'home' %}" class="btn btn-outline-dark">Continue Shopping</a>
+                <a href="{% url 'checkout' %}" class="btn btn-dark btn-lg">
+                    <i class="bi bi-bag-check me-1"></i> Proceed to Checkout
+                </a>
+            </div>
             {% else %}
             <p>There is nothing in the cart</p>
             {% endif %}

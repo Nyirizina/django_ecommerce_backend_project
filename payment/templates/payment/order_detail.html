@@ -1,0 +1,100 @@
+﻿{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<header class="bg-dark py-4">
+    <div class="container px-4 px-lg-5">
+        <div class="text-white">
+            <h1 class="h3 fw-bolder mb-1">Order Detail</h1>
+            <p class="text-white-50 mb-0 small font-monospace">Invoice: {{ order.invoice_number }}</p>
+        </div>
+    </div>
+</header>
+
+<div class="container my-5">
+    <div class="row g-4">
+        <!-- Items -->
+        <div class="col-lg-8">
+            <div class="card shadow-sm">
+                <div class="card-header fw-bold bg-dark text-white">Items Ordered</div>
+                <div class="card-body p-0">
+                    <table class="table mb-0 align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Product</th>
+                                <th>Unit Price</th>
+                                <th>Qty</th>
+                                <th>Line Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in items %}
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <img src="{{ item.product.image.url }}" width="50" height="50" style="object-fit:cover; border-radius:4px;">
+                                        <span class="fw-semibold small">{{ item.product.name }}</span>
+                                    </div>
+                                </td>
+                                <td>${{ item.price }}</td>
+                                <td>{{ item.quantity }}</td>
+                                <td class="fw-bold">${{ item.get_total }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Order Info -->
+        <div class="col-lg-4">
+            <div class="card shadow-sm mb-3">
+                <div class="card-header fw-bold bg-dark text-white">Order Summary</div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-muted">Date Placed</span>
+                        <span>{{ order.date_ordered|date:"M d, Y H:i" }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-muted">Status</span>
+                        <span>
+                            {% if order.status == 'Delivered' %}
+                                <span class="badge bg-success">Delivered</span>
+                            {% elif order.status == 'Shipped' %}
+                                <span class="badge bg-info text-dark">Shipped</span>
+                            {% elif order.status == 'Processing' %}
+                                <span class="badge bg-primary">Processing</span>
+                            {% elif order.status == 'Cancelled' %}
+                                <span class="badge bg-danger">Cancelled</span>
+                            {% else %}
+                                <span class="badge bg-warning text-dark">Pending</span>
+                            {% endif %}
+                        </span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-muted">Payment</span>
+                        <span>{% if order.is_paid %}<span class="text-success fw-semibold">Paid</span>{% else %}Unpaid{% endif %}</span>
+                    </div>
+                    <hr>
+                    <div class="d-flex justify-content-between fw-bold fs-5">
+                        <span>Total</span><span>${{ order.amount_paid }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card shadow-sm">
+                <div class="card-header fw-bold bg-dark text-white">Shipping To</div>
+                <div class="card-body">
+                    <p class="mb-1 fw-semibold">{{ order.full_name }}</p>
+                    <p class="text-muted small mb-0">{{ order.shipping_address_text }}</p>
+                </div>
+            </div>
+
+            <a href="{% url 'orders' %}" class="btn btn-outline-dark w-100 mt-3">
+                &larr; Back to My Orders
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

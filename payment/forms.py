@@ -1,6 +1,5 @@
 from django import forms
 from .models import ShippingAddress
-from ecommerce_website_backend.payment import models
 
 
 class ShippingForm(forms.ModelForm):

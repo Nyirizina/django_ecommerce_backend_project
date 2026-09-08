@@ -13,7 +13,7 @@ from cart.cart import Cart
 def update_info(request):
     if request.user.is_authenticated:
             # getting user from the db who is requesting
-            current_user = Profile.objects.get(user__id=request.user.id)
+            current_user, created = Profile.objects.get_or_create(user=request.user)
             form = UserInfoForm(request.POST or None, instance=current_user)
     
             if form.is_valid():
@@ -110,7 +110,7 @@ def login_user(request):
             login(request, user)
 
             # Shopping cart logic for logged in users
-            current_user = Profile.objects.get(user__id=request.user.id)
+            current_user, created = Profile.objects.get_or_create(user=request.user)
 
             # get saved cart
             saved_cart = current_user.old_cart

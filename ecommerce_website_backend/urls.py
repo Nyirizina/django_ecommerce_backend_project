@@ -10,4 +10,7 @@ urlpatterns = [
     path('', include('store.urls')),
     path('cart/', include('cart.urls')),
     path('payment/', include('payment.urls')),
+    # REST API
+    path('api/', include('store.api_urls')),
+    path('api/', include('payment.api_urls')),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

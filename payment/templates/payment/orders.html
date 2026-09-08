@@ -1,0 +1,64 @@
+﻿{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<header class="bg-dark py-5">
+    <div class="container px-4 px-lg-5 my-5">
+        <div class="text-center text-white">
+            <h1 class="display-4 fw-bolder">My Orders</h1>
+            <p class="lead fw-normal text-white-50 mb-0">Your purchase history</p>
+        </div>
+    </div>
+</header>
+
+<div class="container my-5">
+    {% if orders %}
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead class="table-dark">
+                <tr>
+                    <th>Invoice #</th>
+                    <th>Date</th>
+                    <th>Items</th>
+                    <th>Total</th>
+                    <th>Status</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for order in orders %}
+                <tr>
+                    <td class="font-monospace small">{{ order.invoice_number|truncatechars:13 }}</td>
+                    <td>{{ order.date_ordered|date:"M d, Y" }}</td>
+                    <td>{{ order.items.count }} item(s)</td>
+                    <td class="fw-bold">${{ order.amount_paid }}</td>
+                    <td>
+                        {% if order.status == 'Delivered' %}
+                            <span class="badge bg-success">Delivered</span>
+                        {% elif order.status == 'Shipped' %}
+                            <span class="badge bg-info text-dark">Shipped</span>
+                        {% elif order.status == 'Processing' %}
+                            <span class="badge bg-primary">Processing</span>
+                        {% elif order.status == 'Cancelled' %}
+                            <span class="badge bg-danger">Cancelled</span>
+                        {% else %}
+                            <span class="badge bg-warning text-dark">Pending</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <a href="{% url 'order_detail' order.pk %}" class="btn btn-sm btn-outline-dark">View</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="text-center py-5">
+        <i class="bi bi-bag-x" style="font-size: 3rem; color: #ccc;"></i>
+        <h4 class="mt-3 text-muted">No orders yet</h4>
+        <a href="{% url 'home' %}" class="btn btn-dark mt-2">Start Shopping</a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

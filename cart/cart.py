@@ -1,3 +1,4 @@
+import json
 from store.models import Product, Profile
 
 
@@ -36,11 +37,8 @@ class Cart():
         if self.request.user.is_authenticated:
             # get current user
             current_user = Profile.objects.filter(user__id=self.request.user.id)
-            #remove dictionary from cart and save it to the database
-            carty = str(self.cart)
-            carty = carty.replace("\'","\"")
-            #save the cart to profile model
-            current_user.update(old_cart=carty)
+            # serialize cart to JSON and save to profile
+            current_user.update(old_cart=json.dumps(self.cart))
 
     
     def add(self, product, quantity):
@@ -60,11 +58,8 @@ class Cart():
         if self.request.user.is_authenticated:
             # get current user
             current_user = Profile.objects.filter(user__id=self.request.user.id)
-            #remove dictionary from cart and save it to the database
-            carty = str(self.cart)
-            carty = carty.replace("\'","\"")
-            #save the cart to profile model
-            current_user.update(old_cart=carty)
+            # serialize cart to JSON and save to profile
+            current_user.update(old_cart=json.dumps(self.cart))
 
 
     # returning length of the items in the array
@@ -100,11 +95,8 @@ class Cart():
         if self.request.user.is_authenticated:
             # get current user
             current_user = Profile.objects.filter(user__id=self.request.user.id)
-             #remove dictionary from cart and save it to the database
-            carty = str(self.cart)
-            carty = carty.replace("\'","\"")
-            #save the cart to profile model
-            current_user.update(old_cart=carty)
+            # serialize cart to JSON and save to profile
+            current_user.update(old_cart=json.dumps(self.cart))
 
 
 
@@ -124,11 +116,8 @@ class Cart():
         if self.request.user.is_authenticated:
             # get current user
             current_user = Profile.objects.filter(user__id=self.request.user.id)
-             #remove dictionary from cart and save it to the database
-            carty = str(self.cart)
-            carty = carty.replace("\'","\"")
-            #save the cart to profile model
-            current_user.update(old_cart=carty)
+            # serialize cart to JSON and save to profile
+            current_user.update(old_cart=json.dumps(self.cart))
       
     
     def totals(self):
