@@ -140,3 +140,16 @@ if not DEBUG:
     SESSION_COOKIE_SECURE = True
     SECURE_BROWSER_XSS_FILTER = True
     SECURE_CONTENT_TYPE_NOSNIFF = True
+
+# ── MTN MoMo Collections API ──────────────────────────────────────────────────
+# All values are loaded from environment variables (set them in your .env file).
+# See .env.example for the full list of required variables.
+MOMO_BASE_URL           = os.environ.get('MOMO_BASE_URL', 'https://sandbox.momodeveloper.mtn.com')
+MOMO_SUBSCRIPTION_KEY   = os.environ.get('MOMO_SUBSCRIPTION_KEY', '')
+MOMO_API_USER           = os.environ.get('MOMO_API_USER', '')
+MOMO_API_KEY            = os.environ.get('MOMO_API_KEY', '')
+MOMO_CURRENCY           = os.environ.get('MOMO_CURRENCY', 'EUR')          # EUR for sandbox; RWF for Rwanda
+MOMO_TARGET_ENVIRONMENT = os.environ.get('MOMO_TARGET_ENVIRONMENT', 'sandbox')   # X-Target-Environment header
+MOMO_CALLBACK_HOST      = os.environ.get('MOMO_CALLBACK_HOST', '')        # e.g. "yourdomain.com"
+
+

@@ -1,4 +1,4 @@
-﻿{% extends 'base.html' %}
+{% extends 'base.html' %}
 {% load static %}
 
 {% block content %}
@@ -6,74 +6,121 @@
     <div class="container px-4 px-lg-5 my-5">
         <div class="text-center text-white">
             <h1 class="display-4 fw-bolder">Payment</h1>
-            <p class="lead fw-normal text-white-50 mb-0">Secure Checkout - Step 2 of 2</p>
+            <p class="lead fw-normal text-white-50 mb-0">Secure Checkout — Step 2 of 2</p>
         </div>
     </div>
 </header>
 
 <div class="container my-5">
     <div class="row g-5 justify-content-center">
+
+        <!-- MTN MoMo Payment Panel -->
         <div class="col-lg-6">
             <div class="card shadow-sm mb-4">
-                <div class="card-header bg-dark text-white fw-bold">
-                    <i class="bi bi-lock-fill me-1"></i> Secure Payment (Sandbox)
+                <div class="card-header bg-warning text-dark fw-bold d-flex align-items-center gap-2">
+                    <!-- MoMo brand colour is yellow; icon uses Bootstrap icons -->
+                    <i class="bi bi-phone-fill fs-5"></i>
+                    Pay with MTN Mobile Money
                 </div>
                 <div class="card-body">
-                    <p class="text-muted small mb-3">This is a sandbox environment. No real charges will be made.</p>
-                    <form method="POST" action="{% url 'process_order' %}">
+                    <p class="text-muted small mb-4">
+                        Enter the MTN MoMo number to receive the payment prompt.
+                        You will get a push notification on your phone to approve the transaction.
+                    </p>
+
+                    <!-- ── MTN MoMo payment form ─────────────────────────── -->
+                    <!--
+                        ACTION: this form POSTs to initiate_momo_payment.
+                        When the MoMo API integration is added, that view will:
+                          1. Call the MoMo Collections API with the amount & phone number.
+                          2. Store the referenceId in the session.
+                          3. Render momo_pending.html to tell the user to check their phone.
+                    -->
+                    <form method="POST" action="{% url 'initiate_momo_payment' %}" id="momo-payment-form">
                         {% csrf_token %}
                         <div class="mb-3">
-                            <label for="card-name" class="form-label fw-semibold">Name on Card</label>
-                            <input type="text" id="card-name" class="form-control" placeholder="Full Name" readonly>
-                        </div>
-                        <div class="mb-3">
-                            <label for="card-number" class="form-label fw-semibold">Card Number</label>
-                            <input type="text" id="card-number" class="form-control" value="4242 4242 4242 4242" placeholder="Card Number" readonly>
-                        </div>
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label for="card-expiry" class="form-label fw-semibold">Expiry</label>
-                                <input type="text" id="card-expiry" class="form-control" value="12/28" placeholder="MM/YY" readonly>
+                            <label for="momo-number" class="form-label fw-semibold">
+                                MTN MoMo Number
+                            </label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-warning text-dark fw-bold">+250</span>
+                                <input
+                                    type="tel"
+                                    id="momo-number"
+                                    name="momo_number"
+                                    class="form-control form-control-lg"
+                                    placeholder="07X XXX XXXX"
+                                    pattern="[0-9]{9,10}"
+                                    maxlength="10"
+                                    required
+                                >
                             </div>
-                            <div class="col-md-6 mb-3">
-                                <label for="card-cvc" class="form-label fw-semibold">CVC</label>
-                                <input type="text" id="card-cvc" class="form-control" value="123" placeholder="CVC" readonly>
-                            </div>
+                            <div class="form-text">Enter the 10-digit MTN number (e.g. 0781234567)</div>
                         </div>
-                        <div class="alert alert-info py-2 small">
-                            <i class="bi bi-info-circle-fill me-1"></i> Sandbox mode: click Place Order to complete.
+
+                        <div class="alert alert-warning py-2 small d-flex align-items-center gap-2">
+                            <i class="bi bi-info-circle-fill flex-shrink-0"></i>
+                            <span>
+                                After clicking <strong>Pay Now</strong>, a USSD prompt will appear on the
+                                registered phone. Approve it to complete your order.
+                            </span>
                         </div>
-                        <div class="d-flex justify-content-between align-items-center fw-bold fs-5 mb-3">
+
+                        <div class="d-flex justify-content-between align-items-center fw-bold fs-5 mb-3 mt-3">
                             <span>Total to Pay:</span>
-                            <span class="text-success">${{ totals }}</span>
+                            <span class="text-warning">${{ totals }}</span>
                         </div>
-                        <button type="submit" class="btn btn-success btn-lg w-100">
-                            <i class="bi bi-check-circle-fill me-2"></i>Place Order
+
+                        <button type="submit" id="momo-pay-btn" class="btn btn-warning btn-lg w-100 fw-bold">
+                            <i class="bi bi-phone-vibrate-fill me-2"></i>Pay Now with MoMo
                         </button>
                     </form>
+                    <!-- ── End MoMo payment form ─────────────────────────── -->
+
+                    <div class="text-center mt-3">
+                        <a href="{% url 'checkout' %}" class="text-muted small">
+                            <i class="bi bi-arrow-left me-1"></i>Back to Shipping
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>
 
+        <!-- Order Summary Panel -->
         <div class="col-lg-4">
             <h5 class="fw-bold mb-3">Order Summary</h5>
             {% for product in cart_products %}
             <div class="d-flex justify-content-between mb-2 small">
                 <span>{{ product.name }}
                     {% for key, value in quantities.items %}
-                        {% if key == product.id|slugify %} x {{ value }} {% endif %}
+                        {% if key == product.id|slugify %} <span class="text-muted">x {{ value }}</span>{% endif %}
                     {% endfor %}
                 </span>
-                <span>
+                <span class="fw-semibold">
                     {% if product.is_sale %}${{ product.sale_price }}{% else %}${{ product.price }}{% endif %}
                 </span>
             </div>
             {% endfor %}
             <hr>
             <div class="d-flex justify-content-between fw-bold">
-                <span>Total</span><span>${{ totals }}</span>
+                <span>Total</span>
+                <span class="text-warning">${{ totals }}</span>
             </div>
+            <p class="text-muted small mt-2 mb-0">
+                <i class="bi bi-shield-lock-fill me-1 text-success"></i>
+                Your order details are saved. Payment is processed securely via MTN MoMo.
+            </p>
         </div>
+
     </div>
 </div>
+
+<script>
+    // Disable the Pay Now button after first click to prevent double-submission
+    document.getElementById('momo-payment-form').addEventListener('submit', function () {
+        const btn = document.getElementById('momo-pay-btn');
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span>Processing...';
+    });
+</script>
 {% endblock %}

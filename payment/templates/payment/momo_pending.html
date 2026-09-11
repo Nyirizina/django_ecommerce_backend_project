@@ -1,0 +1,139 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<header class="bg-dark py-5">
+    <div class="container px-4 px-lg-5 my-5">
+        <div class="text-center text-white">
+            <h1 class="display-4 fw-bolder" id="pending-title">Awaiting Payment</h1>
+            <p class="lead fw-normal text-white-50 mb-0">MTN Mobile Money confirmation pending</p>
+        </div>
+    </div>
+</header>
+
+<div class="container my-5 text-center">
+    <div class="row justify-content-center">
+        <div class="col-lg-6">
+            <div class="card shadow-sm border-warning" id="momo-status-card">
+                <div class="card-body py-5">
+
+                    <div id="pending-content">
+                        <div class="mb-4">
+                            <span class="spinner-border text-warning" style="width: 3.5rem; height: 3.5rem;" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </span>
+                        </div>
+                        <h3 class="fw-bold mt-2">Check Your Phone</h3>
+                        <p class="text-muted mt-2 mb-3">
+                            A payment prompt has been sent to your MTN MoMo number.<br>
+                            Please <strong>approve the transaction</strong> on your phone to confirm your order.
+                        </p>
+                    </div>
+
+                    <div id="success-content" class="d-none">
+                        <i class="bi bi-check-circle-fill text-success" style="font-size:3.5rem;"></i>
+                        <h3 class="fw-bold mt-3 text-success">Payment Confirmed!</h3>
+                        <p class="text-muted">Redirecting to your order confirmation…</p>
+                    </div>
+
+                    <div id="failed-content" class="d-none">
+                        <i class="bi bi-x-circle-fill text-danger" style="font-size:3.5rem;"></i>
+                        <h3 class="fw-bold mt-3 text-danger">Payment Failed</h3>
+                        <p class="text-muted" id="failed-reason">The payment could not be completed.</p>
+                        <a href="{% url 'checkout' %}" class="btn btn-warning mt-2 fw-bold">
+                            <i class="bi bi-arrow-counterclockwise me-1"></i>Try Again
+                        </a>
+                    </div>
+
+                    {% if reference_id %}
+                    <div class="alert alert-light border small text-start py-2 mt-3" id="ref-panel">
+                        <span class="fw-semibold text-muted">Reference ID:</span>
+                        <code class="ms-2 text-dark">{{ reference_id }}</code>
+                    </div>
+                    {% endif %}
+
+                    <div class="alert alert-warning small d-flex align-items-start gap-2 text-start mt-3" id="instructions">
+                        <i class="bi bi-exclamation-triangle-fill flex-shrink-0 mt-1"></i>
+                        <span>
+                            Do <strong>not</strong> close or refresh this page while waiting.
+                            The page will update automatically once payment is confirmed.
+                        </span>
+                    </div>
+
+                    <div class="d-flex gap-2 justify-content-center mt-4" id="cancel-btn-row">
+                        <a href="{% url 'checkout' %}" class="btn btn-outline-secondary btn-sm">
+                            <i class="bi bi-arrow-counterclockwise me-1"></i>Cancel &amp; Retry
+                        </a>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    (function () {
+        const REFERENCE_ID  = "{{ reference_id }}";
+        const POLL_INTERVAL = 5000;   // 5 seconds
+        const MAX_POLLS     = 60;     // give up after 5 minutes
+
+        let pollCount = 0;
+        let pollTimer = null;
+
+        function showSuccess() {
+            document.getElementById('pending-content').classList.add('d-none');
+            document.getElementById('success-content').classList.remove('d-none');
+            document.getElementById('instructions').classList.add('d-none');
+            document.getElementById('cancel-btn-row').classList.add('d-none');
+            document.getElementById('momo-status-card').classList.replace('border-warning', 'border-success');
+        }
+
+        function showFailed(reason) {
+            document.getElementById('pending-content').classList.add('d-none');
+            document.getElementById('failed-content').classList.remove('d-none');
+            document.getElementById('instructions').classList.add('d-none');
+            document.getElementById('cancel-btn-row').classList.add('d-none');
+            if (reason) document.getElementById('failed-reason').textContent = reason;
+            document.getElementById('momo-status-card').classList.replace('border-warning', 'border-danger');
+        }
+
+        async function pollStatus() {
+            pollCount++;
+            if (pollCount > MAX_POLLS) {
+                clearInterval(pollTimer);
+                showFailed("Payment timed out. Please try again.");
+                return;
+            }
+
+            try {
+                const res  = await fetch(`/payment/momo/status/${REFERENCE_ID}/`, {
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                });
+                const data = await res.json();
+
+                if (data.status === 'SUCCESSFUL' || data.redirect_url === '{% url "payment_success" %}') {
+                    clearInterval(pollTimer);
+                    showSuccess();
+                    setTimeout(() => { window.location.href = "{% url 'payment_success' %}"; }, 1500);
+                } else if (data.is_terminal && data.status !== 'SUCCESSFUL') {
+                    clearInterval(pollTimer);
+                    const reasons = {
+                        'FAILED':   'Payment was declined.',
+                        'REJECTED': 'You rejected the payment prompt.',
+                        'TIMEOUT':  'You did not approve the payment in time.',
+                    };
+                    showFailed(reasons[data.status] || 'Payment could not be completed.');
+                }
+            } catch (err) {
+                console.warn('Poll error:', err);
+                // Network error — keep polling, don't show failure yet
+            }
+        }
+
+        // Start polling immediately, then repeat
+        pollStatus();
+        pollTimer = setInterval(pollStatus, POLL_INTERVAL);
+    })();
+</script>
+{% endblock %}

@@ -75,3 +75,78 @@ class OrderItem(models.Model):
 
     def get_total(self):
         return self.price * self.quantity
+
+
+class MoMoTransaction(models.Model):
+    """
+    Tracks every MTN MoMo payment attempt end-to-end.
+
+    The `reference_id` is the UUID sent as X-Reference-Id to the MoMo API.
+    It is the idempotency key: momo_callback must check this before creating
+    an Order to avoid double-processing the same callback.
+    """
+
+    STATUS_INITIATED  = 'INITIATED'
+    STATUS_PENDING    = 'PENDING'
+    STATUS_SUCCESSFUL = 'SUCCESSFUL'
+    STATUS_FAILED     = 'FAILED'
+    STATUS_REJECTED   = 'REJECTED'
+    STATUS_TIMEOUT    = 'TIMEOUT'
+
+    STATUS_CHOICES = [
+        (STATUS_INITIATED,  'Initiated'),
+        (STATUS_PENDING,    'Pending'),
+        (STATUS_SUCCESSFUL, 'Successful'),
+        (STATUS_FAILED,     'Failed'),
+        (STATUS_REJECTED,   'Rejected'),
+        (STATUS_TIMEOUT,    'Timeout'),
+    ]
+
+    # MoMo reference UUID — unique, used as idempotency key
+    reference_id          = models.UUIDField(unique=True, db_index=True)
+    # The MoMo financial transaction id (present only when SUCCESSFUL)
+    financial_transaction_id = models.CharField(max_length=100, blank=True)
+
+    # Payment details
+    msisdn         = models.CharField(max_length=20)
+    amount         = models.DecimalField(decimal_places=2, max_digits=10)
+    currency       = models.CharField(max_length=10, default='EUR')
+    external_id    = models.CharField(max_length=100)   # matches Order.invoice_number
+
+    # Status tracking
+    status         = models.CharField(
+        max_length=20, choices=STATUS_CHOICES, default=STATUS_INITIATED
+    )
+    momo_error_reason = models.TextField(blank=True)    # filled on failure
+
+    # Linkage
+    order          = models.OneToOneField(
+        Order, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='momo_transaction'
+    )
+    user           = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, blank=True
+    )
+
+    # Timestamps
+    created_at     = models.DateTimeField(auto_now_add=True)
+    updated_at     = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = 'MoMo Transaction'
+        verbose_name_plural = 'MoMo Transactions'
+
+    def __str__(self):
+        return f"MoMo {self.reference_id} [{self.status}] — {self.msisdn}"
+
+    @property
+    def is_terminal(self) -> bool:
+        """True when the transaction has reached a final (non-retryable) state."""
+        return self.status in (
+            self.STATUS_SUCCESSFUL,
+            self.STATUS_FAILED,
+            self.STATUS_REJECTED,
+            self.STATUS_TIMEOUT,
+        )
+
