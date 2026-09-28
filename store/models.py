@@ -54,6 +54,7 @@ class Customer(models.Model):
 # products
 class Product(models.Model):
     name = models.CharField(max_length=100)
+    slug = models.SlugField(max_length=120, unique=True, blank=True)
     price = models.DecimalField(default=0, decimal_places=2, max_digits=10)
     category = models.ForeignKey(Category, on_delete=models.CASCADE, default=1)
     description = models.CharField(max_length=250, default='', blank=True, null=True)
@@ -66,6 +67,23 @@ class Product(models.Model):
     # inventory & status
     stock = models.PositiveIntegerField(default=10)
     is_active = models.BooleanField(default=True)
+    is_featured = models.BooleanField(default=False)
+
+    # variant info (stored as JSON arrays, e.g. ["S","M","L"] / ["Black","White"])
+    sizes = models.JSONField(default=list, blank=True)
+    colors = models.JSONField(default=list, blank=True)
+
+    def save(self, *args, **kwargs):
+        from django.utils.text import slugify
+        if not self.slug:
+            base = slugify(self.name)
+            slug = base
+            counter = 1
+            while Product.objects.filter(slug=slug).exclude(pk=self.pk).exists():
+                slug = f'{base}-{counter}'
+                counter += 1
+            self.slug = slug
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return self.name

@@ -12,3 +12,9 @@ PHASE 2: Working on user profile
 - Added extended user profile for user to add more details eith a model called Profile.
 - we created an update info user info page bu encountered a bug because there is a problem when user doesn't have a profile. the system render through the profile query and returns an error which means that for the update_info page template to work the user should have a profile created in django admin page. 
 - We added a search functionality that enables user to search by names or decription.
+
+PHASE 3: Connecting the website to online payment
+- Added stripe payment integration 
+- we will be able to process payments in real time 
+- we are about to integrate our system with the MTN MOMO PAYMENT APP
+- we will also integrate the USSD gateway to allow payment with codes through the phone.
