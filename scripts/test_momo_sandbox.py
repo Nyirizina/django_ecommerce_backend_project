@@ -225,12 +225,47 @@ def simulate_callback(reference_id, financial_tx_id):
     ok("by reference_id, verify it's not already terminal, then call _finalize_order_from_shipping()")
 
 
+def _update_env_file(api_user_id: str, api_key: str):
+    """
+    Auto-save provisioned MOMO_API_USER and MOMO_API_KEY into the .env file
+    so the user doesn't have to copy-paste them manually.
+    """
+    env_path = os.path.join(ROOT, '.env')
+    if not os.path.isfile(env_path):
+        info(f".env not found at {env_path} — skipping auto-save.")
+        return
+
+    with open(env_path, 'r', encoding='utf-8') as f:
+        lines = f.readlines()
+
+    updated = False
+    for i, line in enumerate(lines):
+        stripped = line.strip()
+        if stripped.startswith('MOMO_API_USER='):
+            lines[i] = f'MOMO_API_USER={api_user_id}\n'
+            updated = True
+        elif stripped.startswith('MOMO_API_KEY='):
+            lines[i] = f'MOMO_API_KEY={api_key}\n'
+            updated = True
+
+    if updated:
+        with open(env_path, 'w', encoding='utf-8') as f:
+            f.writelines(lines)
+        ok(f"Credentials auto-saved to {env_path}")
+    else:
+        info("MOMO_API_USER / MOMO_API_KEY lines not found in .env — add them manually.")
+
+
 if __name__ == '__main__':
     print(f"\n{BOLD}MTN MoMo Sandbox End-to-End Test{RESET}")
     print(f"Base URL: {BASE_URL}  |  Environment: {TARGET_ENV}  |  Currency: {CURRENCY}\n")
 
     api_user_id = provision_user()
     api_key     = provision_api_key(api_user_id)
+
+    # Auto-save provisioned credentials to .env
+    _update_env_file(api_user_id, api_key)
+
     token       = get_token(api_user_id, api_key)
     ref_id, tok = request_to_pay(token)
     data        = poll_status(ref_id, tok)
@@ -238,7 +273,7 @@ if __name__ == '__main__':
     simulate_callback(ref_id, fin_id)
 
     print(f"\n{BOLD}{GREEN}All sandbox tests passed ✓{RESET}\n")
-    print("To use these credentials, add to your .env:")
+    print("Credentials have been auto-saved to your .env file:")
     print(f"  MOMO_API_USER={api_user_id}")
-    print(f"  MOMO_API_KEY=<value printed in Step 2>")
+    print(f"  MOMO_API_KEY={api_key[:8]}…(saved in .env)")
     print()

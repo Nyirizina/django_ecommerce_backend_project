@@ -18,6 +18,7 @@ import logging
 import uuid
 
 from django.conf import settings
+from django.core.exceptions import ImproperlyConfigured
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db import transaction
@@ -158,7 +159,7 @@ def initiate_momo_payment(request):
             payee_note=f"Order {external_id}",
             callback_url=callback_url,
         )
-    except MoMoError as exc:
+    except (MoMoError, ImproperlyConfigured) as exc:
         logger.error("MoMo initiate failed: %s", exc)
         messages.error(
             request,

@@ -32,6 +32,7 @@ import time
 import logging
 import requests
 from django.conf import settings
+from django.core.exceptions import ImproperlyConfigured
 
 logger = logging.getLogger(__name__)
 
@@ -69,12 +70,28 @@ class MoMoClient:
     """
 
     def __init__(self):
-        self.base_url         = settings.MOMO_BASE_URL.rstrip('/')
-        self.subscription_key = settings.MOMO_SUBSCRIPTION_KEY
-        self.api_user         = settings.MOMO_API_USER
-        self.api_key          = settings.MOMO_API_KEY
-        self.target_env       = settings.MOMO_TARGET_ENVIRONMENT
-        self.currency         = settings.MOMO_CURRENCY
+        self.base_url         = settings.MOMO_BASE_URL.strip().rstrip('/')
+        self.subscription_key = settings.MOMO_SUBSCRIPTION_KEY.strip()
+        self.api_user         = settings.MOMO_API_USER.strip()
+        self.api_key          = settings.MOMO_API_KEY.strip()
+        self.target_env       = settings.MOMO_TARGET_ENVIRONMENT.strip()
+        self.currency         = settings.MOMO_CURRENCY.strip()
+
+        # Fail fast: raise a clear error naming any missing required variable
+        # so misconfiguration surfaces at instantiation, not at the first HTTP call.
+        _required = {
+            'MOMO_SUBSCRIPTION_KEY':   self.subscription_key,
+            'MOMO_API_USER':           self.api_user,
+            'MOMO_API_KEY':            self.api_key,
+            'MOMO_BASE_URL':           self.base_url,
+            'MOMO_TARGET_ENVIRONMENT': self.target_env,
+        }
+        missing = [name for name, val in _required.items() if not val]
+        if missing:
+            raise ImproperlyConfigured(
+                f"MTN MoMo: required setting(s) are empty or missing: "
+                f"{', '.join(missing)}. Check your .env file."
+            )
 
         # Token cache: (access_token_str, expiry_epoch_float)
         self._token_cache: tuple[str, float] | None = None
