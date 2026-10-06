@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import ShippingAddress, Order, OrderItem, MoMoTransaction
+from .models import ShippingAddress, Order, OrderItem, MoMoPayment
 
 
 class OrderItemInline(admin.TabularInline):
@@ -45,20 +45,10 @@ class OrderAdmin(admin.ModelAdmin):
 admin.site.register(ShippingAddress)
 
 
-@admin.register(MoMoTransaction)
-class MoMoTransactionAdmin(admin.ModelAdmin):
-    list_display = (
-        'reference_id_short', 'msisdn', 'amount', 'currency',
-        'status', 'financial_transaction_id', 'user', 'created_at',
-    )
-    list_filter  = ('status', 'currency', 'created_at')
-    search_fields = ('msisdn', 'reference_id', 'financial_transaction_id', 'external_id')
-    readonly_fields = (
-        'reference_id', 'financial_transaction_id', 'msisdn', 'amount',
-        'currency', 'external_id', 'created_at', 'updated_at',
-    )
+@admin.register(MoMoPayment)
+class MoMoPaymentAdmin(admin.ModelAdmin):
+    list_display = ('external_id', 'amount', 'currency', 'status', 'verified', 'user', 'created_at')
+    list_filter = ('status', 'verified', 'currency', 'created_at')
+    search_fields = ('external_id', 'invoice_id')
+    readonly_fields = ('external_id', 'amount', 'currency', 'created_at', 'updated_at')
     ordering = ('-created_at',)
-
-    def reference_id_short(self, obj):
-        return str(obj.reference_id)[:13] + '...'
-    reference_id_short.short_description = 'Reference ID'

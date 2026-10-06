@@ -14,7 +14,5 @@ PHASE 2: Working on user profile
 - We added a search functionality that enables user to search by names or decription.
 
 PHASE 3: Connecting the website to online payment
-- Added stripe payment integration 
-- we will be able to process payments in real time 
-- we are about to integrate our system with the MTN MOMO PAYMENT APP
-- we will also integrate the USSD gateway to allow payment with codes through the phone.
+- Payment app structure is in place (checkout flow, order processing, order history)
+- Ready for new payment gateway integration (MoMo API or other)

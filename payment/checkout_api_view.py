@@ -11,7 +11,7 @@ REST endpoint for placing an order from the Next.js frontend.
         "address_line1", "address_line2"?,
         "city", "region"?, "postal_code", "country", "phone"?
       },
-      "payment_reference": "COD"   // or a MoMo reference
+      "payment_reference": "COD"   // or a payment gateway reference
     }
 
   The view reads cart items from the Django SESSION cart so the browser session

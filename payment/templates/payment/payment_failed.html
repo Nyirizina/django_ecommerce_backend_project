@@ -6,7 +6,7 @@
     <div class="container px-4 px-lg-5 my-5">
         <div class="text-center text-white">
             <h1 class="display-4 fw-bolder text-danger">Payment Failed</h1>
-            <p class="lead fw-normal text-white-50 mb-0">Your MTN MoMo payment could not be processed</p>
+            <p class="lead fw-normal text-white-50 mb-0">Your payment could not be processed</p>
         </div>
     </div>
 </header>
@@ -22,16 +22,16 @@
                         Your payment was not completed. This could be because:
                     </p>
                     <ul class="list-group list-group-flush text-start mb-4">
-                        <li class="list-group-item">❌ You rejected or cancelled the MoMo prompt</li>
+                        <li class="list-group-item">❌ The payment was rejected or cancelled</li>
                         <li class="list-group-item">⏱ The payment timed out before approval</li>
-                        <li class="list-group-item">💳 Insufficient balance in your MoMo wallet</li>
-                        <li class="list-group-item">📶 Network issue between your phone and MTN</li>
+                        <li class="list-group-item">💳 Insufficient balance in your account</li>
+                        <li class="list-group-item">📶 A network issue occurred during processing</li>
                     </ul>
                     <p class="text-muted small">
                         Your cart has been saved. You can try again without re-entering your details.
                     </p>
                     <div class="d-flex gap-2 justify-content-center mt-4">
-                        <a href="{% url 'checkout' %}" class="btn btn-warning fw-bold">
+                        <a href="{% url 'checkout' %}" class="btn btn-primary fw-bold">
                             <i class="bi bi-arrow-counterclockwise me-2"></i>Try Payment Again
                         </a>
                         <a href="{% url 'home' %}" class="btn btn-outline-dark">

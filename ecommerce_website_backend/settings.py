@@ -172,15 +172,28 @@ if not DEBUG:
     SECURE_BROWSER_XSS_FILTER = True
     SECURE_CONTENT_TYPE_NOSNIFF = True
 
-# ── MTN MoMo Collections API ──────────────────────────────────────────────────
-# All values are loaded from environment variables (set them in your .env file).
-# See .env.example for the full list of required variables.
-MOMO_BASE_URL           = os.environ.get('MOMO_BASE_URL', 'https://sandbox.momodeveloper.mtn.com')
-MOMO_SUBSCRIPTION_KEY   = os.environ.get('MOMO_SUBSCRIPTION_KEY', '')
-MOMO_API_USER           = os.environ.get('MOMO_API_USER', '')
-MOMO_API_KEY            = os.environ.get('MOMO_API_KEY', '')
-MOMO_CURRENCY           = os.environ.get('MOMO_CURRENCY', 'EUR')          # EUR for sandbox; RWF for Rwanda
-MOMO_TARGET_ENVIRONMENT = os.environ.get('MOMO_TARGET_ENVIRONMENT', 'sandbox')   # X-Target-Environment header
-MOMO_CALLBACK_HOST      = os.environ.get('MOMO_CALLBACK_HOST', '')        # e.g. "yourdomain.com"
+# ── MTN MoMo Collection Widget ────────────────────────────────────────────────
+# All values are loaded from environment variables (see .env.example).
+import uuid as _uuid
+import logging as _logging
 
+MOMO_WIDGET_SCRIPT_URL = os.environ.get(
+    'MOMO_WIDGET_SCRIPT_URL',
+    'https://widget.northeurope.cloudapp.azure.com:9443/v0.1.0/mobile-money-widget-mtn.js',
+)
 
+_momo_api_user = os.environ.get('MOMO_SANDBOX_API_USER_ID', '').strip()
+if _momo_api_user:
+    MOMO_SANDBOX_API_USER_ID = _momo_api_user
+else:
+    MOMO_SANDBOX_API_USER_ID = str(_uuid.uuid4())
+    _logging.getLogger('settings').warning(
+        'MOMO_SANDBOX_API_USER_ID is not set — generated ephemeral UUID: %s. '
+        'Pin it in your .env for consistent sandbox testing. '
+        'For real sandbox calls this UUID must correspond to an API user '
+        'created through the MoMo sandbox provisioning API.',
+        MOMO_SANDBOX_API_USER_ID,
+    )
+
+MOMO_CURRENCY = os.environ.get('MOMO_CURRENCY', 'EUR')          # EUR for sandbox
+MOMO_DEMO_AMOUNT = os.environ.get('MOMO_DEMO_AMOUNT', '100')    # Default demo amount

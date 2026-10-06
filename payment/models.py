@@ -77,76 +77,57 @@ class OrderItem(models.Model):
         return self.price * self.quantity
 
 
-class MoMoTransaction(models.Model):
+class MoMoPayment(models.Model):
     """
-    Tracks every MTN MoMo payment attempt end-to-end.
+    Tracks a single MTN MoMo Collection Widget payment attempt.
 
-    The `reference_id` is the UUID sent as X-Reference-Id to the MoMo API.
-    It is the idempotency key: momo_callback must check this before creating
-    an Order to avoid double-processing the same callback.
+    Security note: `status` is the value reported by the browser widget.
+    It is NOT proof of payment. The `verified` field indicates whether
+    server-side verification against the MoMo Collection API has confirmed
+    the payment. Never trust `status` alone for order fulfilment.
     """
-
-    STATUS_INITIATED  = 'INITIATED'
-    STATUS_PENDING    = 'PENDING'
-    STATUS_SUCCESSFUL = 'SUCCESSFUL'
-    STATUS_FAILED     = 'FAILED'
-    STATUS_REJECTED   = 'REJECTED'
-    STATUS_TIMEOUT    = 'TIMEOUT'
+    STATUS_CREATED  = 'created'
+    STATUS_PENDING  = 'pending_verification'
+    STATUS_SUCCESS  = 'successful'
+    STATUS_FAILED   = 'failed'
+    STATUS_CANCELED = 'canceled'
 
     STATUS_CHOICES = [
-        (STATUS_INITIATED,  'Initiated'),
-        (STATUS_PENDING,    'Pending'),
-        (STATUS_SUCCESSFUL, 'Successful'),
-        (STATUS_FAILED,     'Failed'),
-        (STATUS_REJECTED,   'Rejected'),
-        (STATUS_TIMEOUT,    'Timeout'),
+        (STATUS_CREATED,  'Created'),
+        (STATUS_PENDING,  'Pending Verification'),
+        (STATUS_SUCCESS,  'Successful'),
+        (STATUS_FAILED,   'Failed'),
+        (STATUS_CANCELED, 'Canceled'),
     ]
 
-    # MoMo reference UUID — unique, used as idempotency key
-    reference_id          = models.UUIDField(unique=True, db_index=True)
-    # The MoMo financial transaction id (present only when SUCCESSFUL)
-    financial_transaction_id = models.CharField(max_length=100, blank=True)
-
-    # Payment details
-    msisdn         = models.CharField(max_length=20)
-    amount         = models.DecimalField(decimal_places=2, max_digits=10)
-    currency       = models.CharField(max_length=10, default='EUR')
-    external_id    = models.CharField(max_length=100)   # matches Order.invoice_number
-
-    # Status tracking
-    status         = models.CharField(
-        max_length=20, choices=STATUS_CHOICES, default=STATUS_INITIATED
+    external_id = models.CharField(
+        max_length=100, unique=True, db_index=True,
+        help_text='Unique order reference passed to the MoMo widget as data-external-id.',
     )
-    momo_error_reason = models.TextField(blank=True)    # filled on failure
+    amount   = models.DecimalField(max_digits=10, decimal_places=2)
+    currency = models.CharField(max_length=10, default='EUR')
 
-    # Linkage
-    order          = models.OneToOneField(
-        Order, on_delete=models.SET_NULL, null=True, blank=True,
-        related_name='momo_transaction'
+    # Widget-reported status (client-side — not trusted for fulfilment)
+    status = models.CharField(
+        max_length=30, choices=STATUS_CHOICES, default=STATUS_CREATED,
     )
-    user           = models.ForeignKey(
-        User, on_delete=models.SET_NULL, null=True, blank=True
+    # Invoice / transaction ID reported by the widget event
+    invoice_id = models.CharField(max_length=200, blank=True)
+
+    # Server-side verification flag — only True after MoMo API confirms payment
+    verified = models.BooleanField(default=False)
+
+    user = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, blank=True,
     )
 
-    # Timestamps
-    created_at     = models.DateTimeField(auto_now_add=True)
-    updated_at     = models.DateTimeField(auto_now=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         ordering = ['-created_at']
-        verbose_name = 'MoMo Transaction'
-        verbose_name_plural = 'MoMo Transactions'
+        verbose_name = 'MoMo Payment'
+        verbose_name_plural = 'MoMo Payments'
 
     def __str__(self):
-        return f"MoMo {self.reference_id} [{self.status}] — {self.msisdn}"
-
-    @property
-    def is_terminal(self) -> bool:
-        """True when the transaction has reached a final (non-retryable) state."""
-        return self.status in (
-            self.STATUS_SUCCESSFUL,
-            self.STATUS_FAILED,
-            self.STATUS_REJECTED,
-            self.STATUS_TIMEOUT,
-        )
-
+        return f"MoMo {self.external_id} [{self.status}]"
