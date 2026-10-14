@@ -1,6 +1,13 @@
 {% extends 'base.html' %}
 {% load static %}
 
+{# Per the official MTN MoMo docs (https://momodeveloper.mtn.com/widget-api):
+   the widget script must be included in the <head> tag. #}
+{% block extra_head %}
+<!-- MTN MoMo Collection Widget sandbox script — loaded from MOMO_WIDGET_SCRIPT_URL in settings -->
+<script src="{{ widget_script_url }}"></script>
+{% endblock %}
+
 {% block content %}
 <header class="bg-dark py-5">
     <div class="container px-4 px-lg-5 my-5">
@@ -32,6 +39,16 @@
                     <div class="row">
                         <div class="col-sm-4 text-muted">Currency:</div>
                         <div class="col-sm-8">{{ currency }}</div>
+                    </div>
+                    <!-- Sandbox test hint (per official docs — remove in production) -->
+                    <div class="row mt-3">
+                        <div class="col-12">
+                            <div class="alert alert-secondary small py-2 mb-0">
+                                <strong>🧪 Sandbox test amounts (EUR):</strong>
+                                1–19 → PENDING &nbsp;|&nbsp; 20–79 → FAILED &nbsp;|&nbsp; 80+ → SUCCESSFUL
+                                &nbsp;(<a href="?amount=100" class="alert-link">use 100</a> for a successful flow)
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -91,6 +108,12 @@
     </div>
 </div>
 
+<!-- ── CSRF token (hidden) — ensures Django sets the csrftoken cookie ──────────
+     The JS reads this cookie to send X-CSRFToken with the confirm POST.
+     See: https://docs.djangoproject.com/en/stable/howto/csrf/#acquiring-the-token-if-csrf-use-sessions-is-false
+-->
+<form id="momo-csrf-form" style="display:none">{% csrf_token %}</form>
+
 <!-- ── Server data for JS (using Django's json_script filter) ──────────────── -->
 {{ external_id|json_script:"momo-ext-id" }}
 {{ amount|json_script:"momo-amount" }}
@@ -99,9 +122,7 @@
 {% endblock %}
 
 {% block extra_js %}
-<!-- MTN MoMo Collection Widget sandbox script (loaded from settings) -->
-<script src="{{ widget_script_url }}"></script>
-
+<!-- Widget integration script (no secrets — all config comes from json_script blocks below) -->
 <script>
 /**
  * MTN MoMo Collection Widget — Integration Script
@@ -196,9 +217,10 @@
         if (listenersAttached) return;
         listenersAttached = true;
 
-        // Attach to both the element and document (docs don't specify where
-        // events bubble — cover both targets, dedup via the bound flag)
-        var targets = [el, document];
+        // Attach to the element, document AND window.
+        // Official docs (https://momodeveloper.mtn.com/widget-api) show
+        // window.addEventListener as the primary example, so we cover all three.
+        var targets = [el, document, window];
 
         EVENT_NAMES.forEach(function (eventName) {
             targets.forEach(function (target) {
@@ -246,8 +268,13 @@
     function postConfirmation(detail) {
         var payload = {
             external_id: CONFIG.externalId || '',
-            invoice_id:  detail.financialTransactionId || detail.invoiceId ||
-                         detail.invoice_id || detail.transactionId || '',
+            // Official docs event.detail shape:
+            // { invoiceId, externalId, referenceId, paymentReference, payee,
+            //   payeeFirstName, payeeLastName, amount, currency,
+            //   status ("PENDING" | "SUCCESSFUL" | "FAILED"), expiryDateTime }
+            invoice_id:  detail.invoiceId ||
+                         detail.financialTransactionId || detail.invoice_id ||
+                         detail.transactionId || '',
             status:      'successful',
         };
 

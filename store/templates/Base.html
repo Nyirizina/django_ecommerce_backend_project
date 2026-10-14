@@ -21,6 +21,7 @@
          src="https://code.jquery.com/jquery-4.0.0.min.js"
         integrity="sha256-OaVG6prZf4v69dPg6PhVattBXkcOWQB62pdZ3ORyrao="
         crossorigin="anonymous"></script>
+        {% block extra_head %}{% endblock %}
     </head>
     <body>
     {% include 'nav_bar.html' %}
@@ -46,7 +47,6 @@
 
 
         
-    </body>
     <!-- Footer-->
         <footer class="py-5 bg-dark">
             <div class="container"><p class="m-0 text-center text-white">Copyright &copy; Your Website 2023</p></div>
@@ -56,4 +56,5 @@
         <!-- Core theme JS-->
         <script src="{% static 'js/scripts.js' %}"></script>
         {% block extra_js %}{% endblock %}
+    </body>
 </html>

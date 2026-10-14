@@ -27,19 +27,15 @@
                         A new payment method will be available soon.
                     </p>
 
-                    <!-- ── Payment form (placeholder — ready for new gateway) ── -->
-                    <form method="POST" action="{% url 'process_order' %}" id="payment-form">
-                        {% csrf_token %}
+                    <!-- ── Payment form (MTN MoMo Collection Widget) ── -->
+                    <div class="d-flex justify-content-between align-items-center fw-bold fs-5 mb-4 mt-3">
+                        <span>Total to Pay:</span>
+                        <span class="text-primary">${{ totals }}</span>
+                    </div>
 
-                        <div class="d-flex justify-content-between align-items-center fw-bold fs-5 mb-3 mt-3">
-                            <span>Total to Pay:</span>
-                            <span class="text-primary">${{ totals }}</span>
-                        </div>
-
-                        <button type="submit" id="pay-btn" class="btn btn-primary btn-lg w-100 fw-bold">
-                            <i class="bi bi-bag-check-fill me-2"></i>Place Order
-                        </button>
-                    </form>
+                    <a href="{% url 'momo_pay' %}?amount={{ totals }}" id="pay-btn" class="btn btn-warning btn-lg w-100 fw-bold text-dark">
+                        <i class="bi bi-phone-fill me-2"></i>Pay with MTN MoMo
+                    </a>
                     <!-- ── End payment form ─────────────────────────────────── -->
 
                     <div class="text-center mt-3">
@@ -81,11 +77,10 @@
 </div>
 
 <script>
-    // Disable the button after first click to prevent double-submission
-    document.getElementById('payment-form').addEventListener('submit', function () {
-        const btn = document.getElementById('pay-btn');
-        btn.disabled = true;
-        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span>Processing...';
+    // Disabled state for payment link
+    document.getElementById('pay-btn').addEventListener('click', function () {
+        this.classList.add('disabled');
+        this.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span>Redirecting...';
     });
 </script>
 {% endblock %}
